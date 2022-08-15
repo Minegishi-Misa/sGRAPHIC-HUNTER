@@ -1,0 +1,146 @@
+require(readr)
+library(plyr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(tidyverse)
+library(R.utils)
+library(RCurl)
+library(Matrix)
+library(openxlsx)
+library(dplyr)
+library(Seurat)
+library(SingleCellSignalR)
+library(seqinr)
+library(stringr)
+library(VennDiagram)
+library(stringdist)
+library(biomaRt)
+
+
+# load data from 10x formatted files
+wdir <- "./TK10x-01-P/outs/filtered_feature_bc_matrix/"
+pbmc01.data <- Read10X(wdir)
+
+wdir <- "./TK10x-02-S/outs/filtered_feature_bc_matrix/"
+pbmc02.data <- Read10X(wdir)
+
+pbmc1 <- CreateSeuratObject(counts = pbmc01.data, project = "pellet", min.cells = 10, min.features = 1000)
+cellids <- colnames(pbmc1)
+pbmc1[['condition']] <- "pellet"
+pbmc1[['lane']] <- substr(cellids, 1, 10)
+
+pbmc2 <- CreateSeuratObject(counts = pbmc02.data, project = "pellet", min.cells = 10, min.features = 1000)
+cellids2 <- colnames(pbmc2)
+pbmc2[['condition']] <- "sup"
+pbmc2[['lane']] <- substr(cellids2, 1, 10)
+
+pbmc10x <- merge(pbmc1, y = pbmc2)
+
+pbmc10x[["percent.mt"]] <- PercentageFeatureSet(pbmc10x, pattern = "^mt-")
+pbmc10x <- NormalizeData(pbmc10x, normalization.method = "LogNormalize", scale.factor = 1e5)
+pbmc10x <- FindVariableFeatures(pbmc10x, selection.method = "vst", nfeatures = 1000)
+
+pbmc <- pbmc10x
+
+
+# discard dead cells
+pbmc <- subset(pbmc, subset= percent.mt<10) #220706 10に変更した（20から）
+pbmc <- subset(pbmc, subset = nCount_RNA < 30000)
+pbmc <- subset(pbmc, subset = nCount_RNA > 1000) 
+
+tenx <- FetchData(pbmc,vars="nCount_RNA")
+median(tenx$nCount_RNA)
+mean(tenx$nCount_RNA)
+tenx <- FetchData(pbmc,vars="nFeature_RNA")
+median(tenx$nFeature_RNA)
+mean(tenx$nFeature_RNA)
+
+
+# clustering
+pbmc <- FindVariableFeatures(pbmc) 
+top10 <- head(VariableFeatures(pbmc), 10)
+plot1 <- VariableFeaturePlot(pbmc)
+plot1 <- LabelPoints(plot = plot1, points = top10)
+plot1
+
+cellids <- colnames(pbmc)
+all.genes <- rownames(pbmc)
+
+pbmc <- ScaleData(pbmc, features = all.genes)
+pbmc <- RunPCA(pbmc, npcs=25, features = VariableFeatures(object = pbmc))
+print(pbmc[["pca"]], dims = 1:2, nfeatures = 50)
+DimPlot(pbmc, reduction = "pca",group.by = "condition")
+
+pca_topcells <- TopCells(object = pbmc[['pca']], balanced = FALSE)
+CellScatter(object = pbmc, cell1 = pca_topcells[1], cell2 = pca_topcells[2])
+
+pbmc <- JackStraw(pbmc, num.replicate = 100)
+pbmc <- ScoreJackStraw(pbmc, dims = 1:20)
+JackStrawPlot(pbmc, dims = 1:20)
+ElbowPlot(pbmc)
+
+pbmc <- FindNeighbors(pbmc, dims = 1:15)
+pbmc <- FindClusters(pbmc, resolution = 0.04) 
+
+cluster = as.numeric(Idents(pbmc))
+pbmc <- RunUMAP(pbmc, dims = 1:15)
+pbmc <- RunTSNE(pbmc, dims = 1:15)
+DimPlot(pbmc, group.by = "condition", label = T) + FeaturePlot(pbmc, features = "nGRAPHIC") #nGRAPHIC gene 
+
+# find marker genes in each cluster
+pbmc.markers <- FindAllMarkers(pbmc, only.pos = FALSE, min.pct = 0.1, logfc.threshold =0.0)
+
+cluster <-data.frame(as.numeric(Idents(pbmc)))
+colnames(cluster) <- "cluster"
+rownames(cluster) <- colnames(pbmc)
+cluster$condition <- pbmc[['condition']]
+
+cluster_density <- cluster %>%
+  dplyr::group_by(cluster) %>%
+  dplyr::count(condition, name = 'count') %>%
+  dplyr::group_by(condition) %>%
+  mutate(freq=count/sum(count))
+ggplot(cluster_density,aes(y=cluster,x=condition$condition,fill=count)) + geom_tile()+ theme_classic() + scale_fill_gradientn(colours = c("white", "red")) + geom_text(aes(label = count)) 
+
+top15 <- pbmc.markers %>% group_by(cluster) %>% top_n(n = 15, wt = avg_log2FC)
+DoHeatmap(pbmc, features = top15$gene) + NoLegend() + theme(axis.text.y = element_text(size = 5))
+
+pbmc10x <- pbmc
+
+# cell types
+VlnPlot(pbmc, features = c("Ehd3", "Ptprb", "Clec4g", "Igfbp7")) #endothelial cell
+VlnPlot(pbmc, features = c("Dcn", "Col1a1", "Msln")) #myofibroblast
+VlnPlot(pbmc, features = c("Itgax", "Ccr2", "Naaa", "Cx3cr1")) #capsule macrophage
+VlnPlot(pbmc, features = c("Epcam", "Krt7", "Krt19", "Sox9")) #holaginocyte
+VlnPlot(pbmc, features = c("Top2a", "Mki67", "Ube2c")) #cycling Kupffer
+VlnPlot(pbmc, features = c("Alb", "Tat")) #hepatocyte
+VlnPlot(pbmc, features = c("C1qa", "Csf1r")) #Kupffer cell
+
+c0 <- subset(pbmc, subset = seurat_clusters == 0)
+c1 <- subset(pbmc, subset = seurat_clusters == 1)
+c2 <- subset(pbmc, subset = seurat_clusters == 2)
+c3 <- subset(pbmc, subset = seurat_clusters == 3)
+c4 <- subset(pbmc, subset = seurat_clusters == 4)
+c5 <- subset(pbmc, subset = seurat_clusters == 5)
+c6 <- subset(pbmc, subset = seurat_clusters == 6)
+c7 <- subset(pbmc, subset = seurat_clusters == 7)
+
+c0[["celltypes"]] <- "Kupffer"
+c2[["celltypes"]] <- "cycling-Kupffer"
+c1[["celltypes"]] <- "Hepatocyte"
+c3[["celltypes"]] <- "Liver-capsule-macrophage"
+c5[["celltypes"]] <- "Hepatic-stellate-Myofibroblast"
+c4[["celltypes"]] <- "Endothelial"
+c6[["celltypes"]] <- "Cholanginocyte"
+
+pbmc10x_2 <- merge(c2, y= c4)
+pbmc10x_2 <- merge(pbmc10x_2, y = c0)
+pbmc10x_2 <- merge(pbmc10x_2, y = c1)
+pbmc10x_2 <- merge(pbmc10x_2, y = c5)
+pbmc10x_2 <- merge(pbmc10x_2, y = c6)
+pbmc10x_2 <- merge(pbmc10x_2, y = c3)
+
+#hepatocyte,Kupffer, Kupffer cycling, Endothelial,  HSC, Cholanginocyte, Liver capsule macrophage
+celltypes_oder <- c(1, 0, 2, 4, 5, 6, 3)
+VlnPlot(pbmc10x_2, features = "nGRAPHIC", pt.size = 0)
