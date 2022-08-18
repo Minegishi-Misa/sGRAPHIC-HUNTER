@@ -263,7 +263,7 @@ ms_ref$entrez_annotation <- ensmusg[ms_ref$ensembl_gene_id,] # entrez annotation
 
 threegroup_entrez_posi <- function(threegroup.deg, ms_ref, cluster, p.thres, log2FC.thres){
   threegroup.marker.n <- threegroup.deg[threegroup.deg$cluster == cluster &
-                                          threegroup.deg$p_val<p.thres &
+                                          threegroup.deg$p_val_adj<p.thres &
                                           threegroup.deg$avg_log2FC > log2FC.thres,] # log2FC > 0
   perturbed_gene.n <- ms_ref[ms_ref$gene_short_name %in% threegroup.marker.n$gene,]
   perturbed_gene.n <- perturbed_gene.n[!is.na(perturbed_gene.n$entrez_annotation),]
@@ -271,15 +271,15 @@ threegroup_entrez_posi <- function(threegroup.deg, ms_ref, cluster, p.thres, log
 }
 threegroup_entrez_nega <- function(threegroup.deg, ms_ref, cluster, p.thres, log2FC.thres){
   threegroup.marker.n <- threegroup.deg[threegroup.deg$cluster == cluster &
-                                          threegroup.deg$p_val<p.thres &
+                                          threegroup.deg$p_val_adj<p.thres &
                                           (threegroup.deg$avg_log2FC)*(-1) > log2FC.thres,] # log2FC < 0
   perturbed_gene.n <- ms_ref[ms_ref$gene_short_name %in% threegroup.marker.n$gene,]
   perturbed_gene.n <- perturbed_gene.n[!is.na(perturbed_gene.n$entrez_annotation),]
   return(perturbed_gene.n)
 }
 
-cnp_p_posi.marker <- threegroup_entrez_posi(cnp, ms_ref, "positive", 0.01, 0.3) # log2FC > 0 in GFP posi
-cnp_p_nega.marker <- threegroup_entrez_nega(cnp, ms_ref, "positive", 0.01, 0.3) # log2FC < 0 in GFP posi
+cnp_p_posi.marker <- threegroup_entrez_posi(cnp, ms_ref, "positive", 0.1, 0.3) # log2FC > 0 in GFP posi
+cnp_p_nega.marker <- threegroup_entrez_nega(cnp, ms_ref, "positive", 0.1, 0.3) # log2FC < 0 in GFP posi
 
 ego_p_posi <- enrichGO(gene = cnp_p_posi.marker$entrez_annotation,
                           OrgDb = org.Mm.eg.db,
@@ -618,14 +618,14 @@ de3_vivo_vs_vitro <- subset(de3_vivo_vs_vitro, test == "TRUE")
 
 twogroup_entrez <- function(twogroup.deg, ms_ref, condition, p.thres, log2FC.thres){
   twogroup.marker.n <- twogroup.deg[twogroup.deg$condition == condition &
-                                      twogroup.deg$p_val<p.thres &
+                                      twogroup.deg$p_val_adj<p.thres &
                                       abs(twogroup.deg$avg_log2FC)>log2FC.thres,]
   perturbed_gene.n <- ms_ref[ms_ref$gene_short_name %in% twogroup.marker.n$gene,]
   perturbed_gene.n <- perturbed_gene.n[!is.na(perturbed_gene.n$entrez_annotation),]
   return(perturbed_gene.n)
 }
 
-de3_vivo.marker <- twogroup_entrez(de3_vivo_vs_vitro, ms_ref, "vivo", 0.01, 0.3)
+de3_vivo.marker <- twogroup_entrez(de3_vivo_vs_vitro, ms_ref, "vivo", 0.1, 0.3)
 ego_vivo <- enrichGO(gene = de3_vivo.marker$entrez_annotation,
                      OrgDb = org.Mm.eg.db,
                      ont = "ALL",
