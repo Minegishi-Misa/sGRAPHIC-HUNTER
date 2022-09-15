@@ -3,7 +3,7 @@ Code from Minegishi and Shintaku (2022) - "Genetic optical labeling of neighbori
 
 ## System requirements
 All code has been tested on a R version 4.1.2 on MacOS 10.15 and 12.5. 
-
+The libraries required for the analysis are listed at the biggining of the R scripts. 
 
 ## Raw data
  All demultiplexed sequencing data have been deposited into the Sequencing Read Archive and are available for download under accession PRJNA841462.
