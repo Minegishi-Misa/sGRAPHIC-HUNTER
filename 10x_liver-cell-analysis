@@ -1,3 +1,4 @@
+# library import
 require(readr)
 library(plyr)
 library(dplyr)
@@ -18,7 +19,7 @@ library(stringdist)
 library(biomaRt)
 
 
-# load data from 10x formatted files
+# data import
 wdir <- "./TK10x-01-P/outs/filtered_feature_bc_matrix/"
 pbmc01.data <- Read10X(wdir)
 
