@@ -145,3 +145,4 @@ pbmc10x_2 <- merge(pbmc10x_2, y = c3)
 #hepatocyte,Kupffer, Kupffer cycling, Endothelial,  HSC, Cholanginocyte, Liver capsule macrophage
 celltypes_oder <- c(1, 0, 2, 4, 5, 6, 3)
 VlnPlot(pbmc10x_2, features = "nGRAPHIC", pt.size = 0)
+## Fig S10c
