@@ -1,5 +1,5 @@
 # sGRAPHIC-HUNETR single cell analysis
-Code from Minegishi and Shintaku (2022) - "Genetic optical labeling of neighboring cells interrogates cell–cell interactions in metastatic niches". 
+Code from Minegishi et.al (2022) - "Genetic optical labeling of neighboring cells interrogates cell–cell interactions in metastatic niches". 
 
 
 ## System requirements
