@@ -31,7 +31,25 @@ HUNTER_hepatocyte-cancercell.R outputs figures corresconding to Fig.3, 4, and S1
 10x format to be loaded in Seurat is available from https://riken-share.ent.box.com/s/r7noivs3qn33y1etalbr4lx9v0mltga8. 
 The directories correspond to the respective samples as follows:
 
-- 20220411_scHUNTER: Index sorted single-cell data (See also the sample table)
+- 20220411_scHUNTER: Index sorted single-cell data 
+
+    hepatocyte
+    |plate#|condition|mouse|GFP label
+    |--|--|--|--
+    |P16|GFP posi|E0771 transplanted mouse|positive
+    |P17|control|control mouse|negative
+    |P18|GFP nega|E0771 transplanted muose|negative
+    |P19|GFP posi|E0771 transplanted mouse|positive
+    |P24|control|control mouse|negative
+    |P25|control|control mouse|negative
+
+
+    E0771 (breast cancer cell)
+    |plate#|condition|origin
+    |--|--|--
+    |p02|E0771 vitro|culture dish
+    |P15|E0771 vivo|E0771 transplatned mouse
+    |p20|E0771 vitro|culture dish
 
 - TK10x-01-P: 10x data of hepatocytes havested from the liver transduced with N-GR
 
