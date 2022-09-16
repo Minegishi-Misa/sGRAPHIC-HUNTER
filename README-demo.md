@@ -31,7 +31,7 @@ HUNTER_hepatocyte-cancercell.R outputs figures corresconding to Fig.3, 4, and S1
 10x format to be loaded in Seurat is available from https://riken-share.ent.box.com/s/r7noivs3qn33y1etalbr4lx9v0mltga8. 
 The directories correspond to the respective samples as follows:
 
-- 20220411_scHUNTER: Index sorted single-cell data (See also the sample table https://docs.google.com/spreadsheets/d/11dQZgAIsm8wNj9tVXcP_dGNEsdy6WkcZ_N0lXj_K2kY/edit#gid=721959203)
+- 20220411_scHUNTER: Index sorted single-cell data (See also the sample table)
 
 - TK10x-01-P: 10x data of hepatocytes havested from the liver transduced with N-GR
 
