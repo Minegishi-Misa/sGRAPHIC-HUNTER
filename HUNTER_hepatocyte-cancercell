@@ -301,8 +301,8 @@ ego_p_nega <- enrichGO(gene = cnp_p_nega.marker$entrez_annotation,
 barplot(ego_p_posi, drop = T, showCategory = 30, font.size = 8)
 barplot(ego_p_nega, drop = T, showCategory = 30, font.size = 8)
 
-write.xlsx(ego_p_posi, "ego_positive_log2FCposi.xlsx", sheetName = "Sheet1") # Fig 3B
-write.xlsx(ego_p_nega, "ego_positive_log2FCnega.xlsx", sheetName = "Sheet1") # Fig 3B
+write.xlsx(ego_p_posi, "ego_positive_log2FCposi.xlsx", sheetName = "Sheet1") ## Fig. 3b
+write.xlsx(ego_p_nega, "ego_positive_log2FCnega.xlsx", sheetName = "Sheet1") ## Fig. 3b
 
 # cell cycling score comparison among three groups
 pbmc <- hepato
@@ -340,10 +340,10 @@ pbmc <- CellCycleScoring(pbmc,g2m.features = g2m_genes,s.features = s_genes,set.
 features=c("S.Score","G2M.Score")
 
 VlnPlot(pbmc, features = "S.Score", group.by = "condition", cols = c("#E88682", "#93458A", "#22AC7C")) + 
-  VlnPlot(pbmc, features = "G2M.Score", group.by = "condition", cols = c("#E88682", "#93458A", "#22AC7C")) 
+  VlnPlot(pbmc, features = "G2M.Score", group.by = "condition", cols = c("#E88682", "#93458A", "#22AC7C"))  ## Fig. 3c
   
 # Lgals3 expression for hepatocytes
-VlnPlot(hepato, features = "Lgals3", group.by = "condition", cols = c("#E88682", "#93458A", "#22AC7C"))
+VlnPlot(hepato, features = "Lgals3", group.by = "condition", cols = c("#E88682", "#93458A", "#22AC7C")) ## Fig. 4c
 
 # hepatocyte clustering
 pbmc <- hepato
@@ -384,7 +384,7 @@ p1+p2+p3
 hepato <- pbmc
 hepato <- RenameIdents(hepato, '1' = '1', '0' = '2', '2' = '3')
 DimPlot(hepato, reduction = "tsne", group.by = "condition", 
-        cols = c("#F88284", "#93458A", "#22AC7C"))
+        cols = c("#F88284", "#93458A", "#22AC7C")) ## Fig. 4a left
 
 pbmc <- hepato
 cluster <-data.frame(as.numeric(Idents(pbmc)))
@@ -404,7 +404,7 @@ library(scales)
 
 ggplot(cluster, aes(x = cluster, fill = condition$condition), stat = "count") + 
   geom_bar(position = "fill") + coord_flip() + scale_y_continuous(labels = scales::percent) +
-  scale_fill_manual(values = c("#F88284", "#93458A", "#22AC7C")) + theme_bw() + theme(text = element_text(angle=(90))) 
+  scale_fill_manual(values = c("#F88284", "#93458A", "#22AC7C")) + theme_bw() + theme(text = element_text(angle=(90)))  ## Fig. 4a right
 
 # cluster maker genes 
 hepato.markers <- FindAllMarkers(hepato, only.pos = T)
@@ -444,7 +444,7 @@ pheatmap(pbmc[["RNA"]]@data[top20$gene,order(pbmc[["pseudospace"]],decreasing=F)
          annotation_col = pbmc[["cluster"]],
          annotation_colors = ann_colors,
          cluster_cols = F,
-         labels_col = NULL) # Fig 4B
+         labels_col = NULL) ## Fig. 4b
 
 # SCENIC
 library(SCENIC)
@@ -529,11 +529,7 @@ plot <- plot(gg,
              edge.arrow.size = 0.05,
              layout=layout.fruchterman.reingold, 
              vertex.label.family = "Arial"
-)
-
-# Lgals3
-VlnPlot(all, features = "Lgals3", group.by = "condition", 
-        cols = c("#F88284", "#93458A", "#22AC7C", "#A3A500", "#4FACEF")) 
+) ## Fig. S14
 
 # hepatocytes from the control liver vs hepatocytes from the transplatend liver
 cntl <- subset(hepa, mouse == "control")
@@ -592,7 +588,7 @@ ggplot(data = de1_cntl_vs_trans,
   # geom_label_repel(data = certein_genes,
   #                  aes(label = gene),
   #                  force = 2,
-  #                  nudge_y = 1) #FigS13
+  #                  nudge_y = 1) ## FigS13
 
 ##### E0771 ####
 # E0771 from the metastasized liver vs E0771 in vitro
@@ -635,11 +631,11 @@ ego_vivo <- enrichGO(gene = de3_vivo.marker$entrez_annotation,
                      pvalueCutoff = 0.05,
                      qvalueCutoff = 0.05,
                      readable = T)
-barplot(ego_vivo, drop = T, showCategory = 30, font.size = 8) #FigS14
-write.xlsx(ego_vivo, "ego_vivo.xlsx", sheetName = "Sheet1")
+barplot(ego_vivo, drop = T, showCategory = 30, font.size = 8) 
+write.xlsx(ego_vivo, "ego_vivo.xlsx", sheetName = "Sheet1") ## Fig. S15a
 
 ######allcell#######
 VlnPlot(all, features = c("Il2", "Itgb1"), group.by = "condition", 
-        cols = c("#F88284", "#93458A", "#22AC7C", "#A3A500", "#4FACEF"))
+        cols = c("#F88284", "#93458A", "#22AC7C", "#A3A500", "#4FACEF")) ## Figs. S15b and  S15c
 
 
