@@ -34,22 +34,22 @@ The directories correspond to the respective samples as follows:
 - 20220411_scHUNTER: Index sorted single-cell data 
 
     hepatocyte
-    |plate#|condition|mouse|GFP label
+    |plate#|condition|GFPlabel|mouse
     |--|--|--|--
-    |P16|GFP posi|E0771 transplanted mouse|positive
-    |P17|control|control mouse|negative
-    |P18|GFP nega|E0771 transplanted muose|negative
-    |P19|GFP posi|E0771 transplanted mouse|positive
-    |P24|control|control mouse|negative
-    |P25|control|control mouse|negative
+    |P16|E0771 transplanted GFP posi|positive|transplanted
+    |P17|control GFP nega|negative|control
+    |P18|E0771 transplanted GFP nega|negative|transplanted
+    |P19|E0771 transplanted GFP posi|positive|transplanted
+    |P24|control GFP nega|negative|control
+    |P25|control GFP nega|negative|control
 
 
     E0771 (breast cancer cell)
-    |plate#|condition|origin
-    |--|--|--
-    |p02|E0771 vitro|culture dish
-    |P15|E0771 vivo|E0771 transplatned mouse
-    |p20|E0771 vitro|culture dish
+    |plate#|condition
+    |--|--
+    |p02|E0771 vitro
+    |P15|E0771 vivo
+    |p20|E0771 vitro
 
 - TK10x-01-P: 10x data of hepatocytes havested from the liver transduced with N-GR
 
