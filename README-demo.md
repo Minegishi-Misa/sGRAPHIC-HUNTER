@@ -24,7 +24,7 @@ To download the data analysis code, git clone using the following command:
 
 ### Scripts 
 
-HUNTER_hepatocyte-cancercell.R outputs figures corresconding to Figs. 3, 4, and S13 to S15 in the manuscripts of Minegishi et al. (2022).
+HUNTER_hepatocyte-cancercell.R outputs figures corresconding to Figs. 3b, 3c, 4b, 4c, and S13 to S15 in the manuscripts of Minegishi et al. (2022).
 
 10x_liver-cell-analysis.R outputs figures corresponding to Fig. S10c. 
 
