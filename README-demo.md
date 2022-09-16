@@ -24,9 +24,16 @@ To download the data analysis code, git clone using the following command:
 
 ### Scripts 
 
-HUNTER_hepatocyte-cancercell.R outputs figures corresconding to Figs. 3b, 3c, 4b, 4c, and S13 to S15 in the manuscripts of Minegishi et al. (2022).
+HUNTER_hepatocyte-cancercell.R outputs figures corresconding to Figs. 3b, 3c, 4b, 4c, and S13 to S15 in the manuscript of Minegishi et al. (2022).
 
 10x_liver-cell-analysis.R outputs figures corresponding to Fig. S10c. 
+
+Expected outputs are commented as corresponding figure numbers at the end of each analysis code. 
+
+Execution of all analyses takes less than a few days. 
+SCENIC analysis takes the most time.
+
+The code is released under the GNU Public License (GPL 3.0).
 
 ### 10x format data
 
@@ -35,7 +42,7 @@ The directories correspond to the respective samples as follows:
 
 - 20220411_scHUNTER: Index sorted single-cell data 
 
-    hepatocyte
+    **hepatocyte**
     |plate|condition|GFPlabel|mouse
     |--|--|--|--
     |P16|E0771 transplanted GFP posi|positive|transplanted
@@ -46,7 +53,7 @@ The directories correspond to the respective samples as follows:
     |P25|control GFP nega|negative|control
 
 
-    E0771 (breast cancer cell)
+    **E0771 (breast cancer cell)**
     |plate|condition
     |--|--
     |p02|E0771 vitro
@@ -57,16 +64,11 @@ The directories correspond to the respective samples as follows:
 
 - TK10x-02-S: 10x data of non-parenchymal cells harested from the liver transduced with N-GR
 
-Expected outputs are commented as corresponding figure numbers at the end of each analysis code. 
-
-Execution of all analyses takes less than a few days.
-SCENIC analysis takes the most time.
-
 
 ## Raw sequence data
  All demultiplexed sequencing data have been deposited on the Sequencing Read Archive and are available for download under accession PRJNA841462.
 
 
-The code is released under the GNU Public License (GPL 3.0).
+
 
 
