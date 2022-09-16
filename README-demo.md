@@ -34,7 +34,7 @@ The directories correspond to the respective samples as follows:
 - 20220411_scHUNTER: Index sorted single-cell data 
 
     hepatocyte
-    |plate#|condition|GFPlabel|mouse
+    |plate|condition|GFPlabel|mouse
     |--|--|--|--
     |P16|E0771 transplanted GFP posi|positive|transplanted
     |P17|control GFP nega|negative|control
@@ -45,7 +45,7 @@ The directories correspond to the respective samples as follows:
 
 
     E0771 (breast cancer cell)
-    |plate#|condition
+    |plate|condition
     |--|--
     |p02|E0771 vitro
     |P15|E0771 vivo
