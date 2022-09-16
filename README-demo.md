@@ -1,31 +1,18 @@
-# sGRAPHIC-HUNETR single cell analysis
-Code from Minegishi et.al (2022) - "Genetic optical labeling of neighboring cells interrogates cell–cell interactions in metastatic niches". 
+# sGRAPHIC-HUNTER single cell analysis
+Code from Minegishi et al. (2022) - "Genetic optical labeling of neighboring cells interrogates cell–cell interactions in metastatic niches." 
 
 
 ## System requirements
-All code has been tested on a R version 4.1.2 on MacOS 10.15 and 12.5. 
+All code has been tested on R version 4.1.2 on MacOS 10.15 and 12.5. 
 
 
 ## Installation guide
-Rstudio are downloaded from https://www.rstudio.com/. 
-The libraries required for the analysis are listed at the biggining of the R scripts. 
-Typical install time is within 30 min. 
-All code execution is available as standard equipment. 
+Rstudio is downloaded from https://www.rstudio.com/. 
+The libraries required for the analysis are listed at the beginning of the R scripts. 
+The typical install time is within 30 min. 
 
 
 ## Demo
-The data to be loaded in Seurat was placed in Dropbox(). Also, the code for data analysis can be obtained via github. 
-Expected output are commented as corresponding figure number at the end of each analysis code. 
-Excution of all analyses require less than few days. SCENIC analysis require most time.  
-
-
-####  Raw data
- All demultiplexed sequencing data have been deposited into the Sequencing Read Archive and are available for download under accession PRJNA841462.
-
-
-#### Data matricics
-Data matricics containing the matrix.mtx, features.tsv, and barcodes.tsv files are available from Dropbox().
-
 
 ####  Data analysis 
 To download the data analysis code, git clone using the following command: 
@@ -33,6 +20,32 @@ To download the data analysis code, git clone using the following command:
     git clone https://github.com/Minegishi-Misa/sGRAPHIC-HUNTER.git
 
 
-Copyright (C) 2022 Misa Minegishi, Hirofumi Shintaku
+## Scripts 
+
+HUNTER_hepatocyte-cancercell.R outputs figures corresconding to Fig.3, 4, and S13 to S15 in the manuscripts of Minegishi et al. (2022).
+
+10x_liver-cell-analysis.R outputs figures corresponding to Fig. S10c. 
+
+## 10x format data
+
+10x format to be loaded in Seurat is available from https://riken-share.ent.box.com/s/r7noivs3qn33y1etalbr4lx9v0mltga8. 
+The directories correspond to the respective samples as follows:
+
+- 20220411_scHUNTER: Index sorted single-cell data (See also the sample table https://docs.google.com/spreadsheets/d/11dQZgAIsm8wNj9tVXcP_dGNEsdy6WkcZ_N0lXj_K2kY/edit#gid=721959203)
+
+- TK10x-01-P: 10x data of hepatocytes havested from the liver transduced with N-GR
+
+- TK10x-02-S: 10x data of non-parenchymal cells harested from the liver transduced with N-GR
+
+Expected outputs are commented as corresponding figure numbers at the end of each analysis code. 
+Execution of all analyses takes less than a few days.
+SCENIC analysis takes the most time.
+
+
+####  Raw sequence data
+ All demultiplexed sequencing data have been deposited on the Sequencing Read Archive and are available for download under accession PRJNA841462.
+
+
+The code is released under the GNU Public License (GPL 3.0).
 
 
