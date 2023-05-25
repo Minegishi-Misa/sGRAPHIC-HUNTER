@@ -1,16 +1,8 @@
-############################################################################
-### This script outputs figures corresconding to Figs. 3b, 3c, 4b, 4c, and S13 to S15 in the manuscript of Minegishi et al. (2022).
-### Copyright (C) 2022  Misa Minegishi and Hirofumi Shintaku
+#########################
+##### Figure making #####
+#########################
 
-### This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version.
-
-### This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
-### See the GNU General Public License for more details.
-
-### You should have received a copy of the GNU General Public License along with this program. 
-############################################################################
-
-##### library import #####
+##### Library import #####
 require(readr)
 library(plyr)
 library(dplyr)
@@ -25,20 +17,24 @@ library(RCurl)
 library(Matrix)
 library(openxlsx)
 library(Seurat)
-library(SingleCellSignalR)
+# library(SingleCellSignalR)
 library(seqinr)
 library(stringr)
-library(VennDiagram)
-library(stringdist)
+# library(VennDiagram)
+# library(stringdist)
 library(biomaRt)
 library("enrichplot")
 library("pathview")
 library("org.Mm.eg.db")
 library(clusterProfiler)
 
+##### Directory #####
+setwd("/home/samba/public/minegishi/Ranalysis/230525_2/")
+datadir <- "/home/samba/sanger/shintaku/hunter/20220411_scHUNTER/"
 
-##### data import ######
-hunter <- Read10X(data.dir="./20220411_scHUNTER/")
+##### Importing data #####
+hunter <- Read10X(data.dir=datadir)
+
 hunter.seurat <- CreateSeuratObject(hunter)
 cellids <- colnames(hunter.seurat)
 hunter.seurat[["plate"]] <- substr(cellids,1,3)
@@ -51,38 +47,26 @@ FeatureScatter(hunter.seurat,feature1="nFeature_RNA",feature2 = "nCount_RNA",
                group.by="plate")
 VlnPlot(hunter.seurat,features = "nCount_RNA",group.by = "plate")+scale_y_log10()
 
-##### set cell condition #####
+#####writing condition######
 # allcell
 allcell <- hunter.seurat
 pbmc <- allcell
-library(biomaRt)
-func.biomart.ref <- function(hs_mart, gene_list,filter,symbol){
-  reference=getBM(attributes=c("ensembl_gene_id","description",symbol,"gene_biotype","chromosome_name","entrezgene_id"),
-                  filters=filter,values=gene_list,mart=hs_mart)
-  
-  colnames(reference) <- c("ensembl_gene_id","description","gene_short_name","gene_biotype","chromosome_name","entrezgene_id")
-  reference <- reference[!duplicated(reference$ensembl_gene_id),]
-  row.names(reference) <- reference$ensembl_gene_id
-  empty_logical <- which(reference$gene_short_name=="")
-  reference$gene_short_name <- as.character(reference$gene_short_name)
-  reference[empty_logical,]$gene_short_name <- as.character(reference[empty_logical,]$ensembl_gene_id)
-  
-  return(reference)
-}
-func.ref.intron <- function(hs_ref){
-  hs_ref_intron <- hs_ref
-  hs_ref_intron$ensembl_gene_id <- paste0(hs_ref$ensembl_gene_id,"_intron")
-  rownames(hs_ref_intron)<- hs_ref_intron$ensembl_gene_id
-  return(hs_ref_intron)
-}
+# source("minegishi_Seurat_annotate_cells.R") #220701更新した
+# create reference table with gene_short_name
+source(file.path("/home/samba/public/shintaku/github/hunter2/util/hunter_biomart_ref.R"))
 gene_list <- data.frame(rownames(pbmc))
 colnames(gene_list) <- "gene"
-filter="mgi_symbol"
+# #hs_ref <- func.biomart.ref(hs_mart,gene_list,"hgnc_symbol")
+filter="mgi_symbol" #"hgnc_symbol"はヒト、マウスは"mgi_symbol"
+# ms_mart <- useMart(biomart="ensembl", host="useast.ensembl.org",dataset="mmusculus_gene_ensembl")
 ms_mart <- useMart(biomart="ensembl", host="https://www.ensembl.org",dataset="mmusculus_gene_ensembl")
 symbol="mgi_symbol"
 ms_ref <- unique(func.biomart.ref(ms_mart,gene_list,filter,symbol))
 missing_ref <- subset(gene_list,!(gene %in% ms_ref$gene_short_name))
 adding_ref <- data.frame(cbind(missing_ref$gene,missing_ref$gene,missing_ref$gene,missing_ref$gene,missing_ref$gene, missing_ref$gene))
+# Error in names(x) <- value : 
+#'names' attribute [6] must be the same length as the vector [5]
+#'が出たときには、missing_ref$geneの数を増やす
 colnames(adding_ref) <- colnames(ms_ref)
 rownames(adding_ref) <- adding_ref$ensembl_gene_id
 ms_ref <- rbind(adding_ref,ms_ref)
@@ -102,6 +86,9 @@ E0771_3[["condition"]] <- "E0771vitro"
 E0771 <- merge(E0771_1, E0771_2)
 E0771 <- merge(E0771, E0771_3)
 rm(E0771_1, E0771_2, E0771_3)
+
+DefaultAssay(E0771) <- "RNA"
+E0771 <- NormalizeData(E0771, normalization.method = "LogNormalize", scale.factor = 1e5)
 
 # hepatocyte
 hepa <- subset(hunter.seurat, plate == "p02", invert = T)
@@ -128,12 +115,20 @@ EGFPposi[["mouse"]] <- "transplanted"
 hepa <- merge(CGFPnega, EGFPnega)
 hepa <- merge(hepa, EGFPposi)
 
+DefaultAssay(hepa) <- "RNA"
+hepa <- NormalizeData(hepa, normalization.method = "LogNormalize", scale.factor = 1e5)
+
 #####allcell#####
 all <- merge(E0771, hepa)
+
+DefaultAssay(all) <- "RNA"
+all <- NormalizeData(all, normalization.method = "LogNormalize", scale.factor = 1e5)
+
 all <- subset(all, nCount_RNA > 3000)
 all <- subset(all, percent.mt < 7)
 pbmc <- all
 
+library(tidyr)
 pbmc <- NormalizeData(pbmc, normalization.method = "LogNormalize", scale.factor = 1e5)
 pbmc <- FindVariableFeatures(pbmc, selection.method = "vst", nfeatures = 1000)
 
@@ -173,16 +168,26 @@ plot1 <- LabelPoints(plot = plot1, points = top10)
 plot1
 
 # clustering 
+library(tidyr)
 conflict_prefer("mutate", "dplyr")
 conflict_prefer("pheatmap", "pheatmap") 
-
+# running PCA npcs in the RunPCA function must be less than the number of samples
+# default is 50
 cellids <- colnames(pbmc)
 all.genes <- rownames(pbmc)
-
+#all.genes <- ordering_genes_disp$gene_id
+#pbmc<-hepa
 pbmc <- ScaleData(pbmc, features = all.genes)
 pbmc <- RunPCA(pbmc, npcs=20, features = VariableFeatures(object = pbmc))
 
 print(pbmc[["pca"]], dims = 1:2, nfeatures = 50)
+
+# plot plates/dishes/gates/pools/rtid
+p1 <- DimPlot(pbmc, reduction = "pca",group.by = "condition")
+p2 <- DimPlot(pbmc, reduction = "pca",group.by = "plate")
+p3 <- DimPlot(pbmc, reduction = "pca",group.by = "gate")
+p4<-DimPlot(pbmc, reduction = "pca",group.by = "pool")
+p1+p2+p3+p4
 
 # gene expression scatter
 pca_topcells <- TopCells(object = pbmc[['pca']], balanced = FALSE)
@@ -206,6 +211,9 @@ p3 <- DimPlot(pbmc)
 p1+p2+p3
 
 #find marker genes in each cluster
+DefaultAssay(pbmc) <- "RNA"
+pbmc <- NormalizeData(pbmc, normalization.method = "LogNormalize", scale.factor = 1e5)
+
 pbmc.markers <- FindAllMarkers(pbmc, only.pos = FALSE)
 all.markers <- pbmc.markers
 
@@ -262,6 +270,9 @@ Idents(posi) <- "positive"
 hepato <- merge(cntl, nega)
 hepato <- merge(hepato, posi)
 
+DefaultAssay(hepato) <- "RNA"
+hepato <- NormalizeData(hepato, normalization.method = "LogNormalize", scale.factor = 1e5)
+
 cnp <- FindAllMarkers(hepato)
 cnp <- cnp[cnp$p_val_adj < 0.1, ]
 cnp.var <- unique(cnp$gene)
@@ -275,7 +286,7 @@ ms_ref$entrez_annotation <- ensmusg[ms_ref$ensembl_gene_id,] # entrez annotation
 
 threegroup_entrez_posi <- function(threegroup.deg, ms_ref, cluster, p.thres, log2FC.thres){
   threegroup.marker.n <- threegroup.deg[threegroup.deg$cluster == cluster &
-                                          threegroup.deg$p_val_adj<p.thres &
+                                          threegroup.deg$p_val<p.thres &
                                           threegroup.deg$avg_log2FC > log2FC.thres,] # log2FC > 0
   perturbed_gene.n <- ms_ref[ms_ref$gene_short_name %in% threegroup.marker.n$gene,]
   perturbed_gene.n <- perturbed_gene.n[!is.na(perturbed_gene.n$entrez_annotation),]
@@ -283,23 +294,23 @@ threegroup_entrez_posi <- function(threegroup.deg, ms_ref, cluster, p.thres, log
 }
 threegroup_entrez_nega <- function(threegroup.deg, ms_ref, cluster, p.thres, log2FC.thres){
   threegroup.marker.n <- threegroup.deg[threegroup.deg$cluster == cluster &
-                                          threegroup.deg$p_val_adj<p.thres &
+                                          threegroup.deg$p_val<p.thres &
                                           (threegroup.deg$avg_log2FC)*(-1) > log2FC.thres,] # log2FC < 0
   perturbed_gene.n <- ms_ref[ms_ref$gene_short_name %in% threegroup.marker.n$gene,]
   perturbed_gene.n <- perturbed_gene.n[!is.na(perturbed_gene.n$entrez_annotation),]
   return(perturbed_gene.n)
 }
 
-cnp_p_posi.marker <- threegroup_entrez_posi(cnp, ms_ref, "positive", 0.1, 0.3) # log2FC > 0 in GFP posi
-cnp_p_nega.marker <- threegroup_entrez_nega(cnp, ms_ref, "positive", 0.1, 0.3) # log2FC < 0 in GFP posi
+cnp_p_posi.marker <- threegroup_entrez_posi(cnp, ms_ref, "positive", 0.01, 0.3) # log2FC > 0 in GFP posi
+cnp_p_nega.marker <- threegroup_entrez_nega(cnp, ms_ref, "positive", 0.01, 0.3) # log2FC < 0 in GFP posi
 
 ego_p_posi <- enrichGO(gene = cnp_p_posi.marker$entrez_annotation,
-                          OrgDb = org.Mm.eg.db,
-                          ont = "ALL",
-                          pAdjustMethod = "BH",
-                          pvalueCutoff = 0.05,
-                          qvalueCutoff = 0.05, 
-                          readable = T) # GO analysis of log2FC > 0 in GFP posi
+                       OrgDb = org.Mm.eg.db,
+                       ont = "ALL",
+                       pAdjustMethod = "BH",
+                       pvalueCutoff = 0.05,
+                       qvalueCutoff = 0.05, 
+                       readable = T) # GO analysis of log2FC > 0 in GFP posi
 ego_p_nega <- enrichGO(gene = cnp_p_nega.marker$entrez_annotation,
                        OrgDb = org.Mm.eg.db,
                        ont = "ALL",
@@ -311,8 +322,8 @@ ego_p_nega <- enrichGO(gene = cnp_p_nega.marker$entrez_annotation,
 barplot(ego_p_posi, drop = T, showCategory = 30, font.size = 8)
 barplot(ego_p_nega, drop = T, showCategory = 30, font.size = 8)
 
-write.xlsx(ego_p_posi, "ego_positive_log2FCposi.xlsx", sheetName = "Sheet1") ## Fig. 3b
-write.xlsx(ego_p_nega, "ego_positive_log2FCnega.xlsx", sheetName = "Sheet1") ## Fig. 3b
+write.xlsx(ego_p_posi, "ego_positive_log2FCposi.xlsx", sheetName = "Sheet1") # Fig 3B
+write.xlsx(ego_p_nega, "ego_positive_log2FCnega.xlsx", sheetName = "Sheet1") # Fig 3B
 
 # cell cycling score comparison among three groups
 pbmc <- hepato
@@ -350,10 +361,9 @@ pbmc <- CellCycleScoring(pbmc,g2m.features = g2m_genes,s.features = s_genes,set.
 features=c("S.Score","G2M.Score")
 
 VlnPlot(pbmc, features = "S.Score", group.by = "condition", cols = c("#E88682", "#93458A", "#22AC7C")) + 
-  VlnPlot(pbmc, features = "G2M.Score", group.by = "condition", cols = c("#E88682", "#93458A", "#22AC7C"))  ## Fig. 3c
-  
+  VlnPlot(pbmc, features = "G2M.Score", group.by = "condition", cols = c("#E88682", "#93458A", "#22AC7C")) # Fig 3C
 # Lgals3 expression for hepatocytes
-VlnPlot(hepato, features = "Lgals3", group.by = "condition", cols = c("#E88682", "#93458A", "#22AC7C")) ## Fig. 4c
+VlnPlot(hepato, features = "Lgals3", group.by = "condition", cols = c("#E88682", "#93458A", "#22AC7C"))
 
 # hepatocyte clustering
 pbmc <- hepato
@@ -380,8 +390,8 @@ pbmc <- ScoreJackStraw(pbmc, dims = 1:20)
 JackStrawPlot(pbmc, dims = 1:20)
 ElbowPlot(pbmc)
 
-pbmc <- FindNeighbors(pbmc, dims = 1:4) 
-pbmc <- FindClusters(pbmc, resolution = 0.3) 
+pbmc <- FindNeighbors(pbmc, dims = 1:4) #, k.param = 3
+pbmc <- FindClusters(pbmc, resolution = 0.3) # 1:4, resolution 0.3
 
 cluster = as.numeric(Idents(pbmc))
 pbmc <- RunUMAP(pbmc, dims = 1:4)
@@ -394,7 +404,7 @@ p1+p2+p3
 hepato <- pbmc
 hepato <- RenameIdents(hepato, '1' = '1', '0' = '2', '2' = '3')
 DimPlot(hepato, reduction = "tsne", group.by = "condition", 
-        cols = c("#F88284", "#93458A", "#22AC7C")) ## Fig. 4a left
+        cols = c("#F88284", "#93458A", "#22AC7C")) # Fig 4A-1
 
 pbmc <- hepato
 cluster <-data.frame(as.numeric(Idents(pbmc)))
@@ -414,7 +424,7 @@ library(scales)
 
 ggplot(cluster, aes(x = cluster, fill = condition$condition), stat = "count") + 
   geom_bar(position = "fill") + coord_flip() + scale_y_continuous(labels = scales::percent) +
-  scale_fill_manual(values = c("#F88284", "#93458A", "#22AC7C")) + theme_bw() + theme(text = element_text(angle=(90)))  ## Fig. 4a right
+  scale_fill_manual(values = c("#F88284", "#93458A", "#22AC7C")) + theme_bw() + theme(text = element_text(angle=(90))) # Fig 4A-2
 
 # cluster maker genes 
 hepato.markers <- FindAllMarkers(hepato, only.pos = T)
@@ -427,9 +437,9 @@ pbmc <- hepa_GFP
 library(destiny)
 library(ggplot2)
 library(conflicted)
-suppressPackageStartupMessages(library(scran))
+# suppressPackageStartupMessages(library(scran))
 library(purrr)
-library(wordspace)
+# library(wordspace)
 library(pheatmap)
 
 pbmc.data <-pbmc[["RNA"]]@data
@@ -454,11 +464,12 @@ pheatmap(pbmc[["RNA"]]@data[top20$gene,order(pbmc[["pseudospace"]],decreasing=F)
          annotation_col = pbmc[["cluster"]],
          annotation_colors = ann_colors,
          cluster_cols = F,
-         labels_col = NULL) ## Fig. 4b
+         labels_col = NULL) # Fig 4B
 
-# SCENIC
+# SCENIC #on sanger setwd("/home/samba/public/shitanku/github/hunter2/")
 library(SCENIC)
 library(loomR)
+library(SCopeLoomR)
 library(conflicted)
 conflict_prefer("first", "S4Vectors")
 conflict_prefer("finalize", "SCopeLoomR")
@@ -468,8 +479,8 @@ loom <- build_loom("hunter_hepa.loom", dgem=exprMat)
 loom <- add_cell_annotation(loom, cellInfo)
 close_loom(loom)
 org <- "mgi"
-dbDir <- "./cisTarget_mm10/" # RcisTarget databases location
-myDatasetTitle <- "SCENIC hunter hepatocytes" 
+dbDir <- "/home/samba/public/genome/cisTarget_mm10/" # RcisTarget databases location
+myDatasetTitle <- "SCENIC hunter hepatocytes" # choose a name for your analysis
 dbs <- c("mm10__refseq-r80__500bp_up_and_100bp_down_tss.mc9nr.feather",
          "mm10__refseq-r80__10kb_up_and_down_tss.mc9nr.feather")
 names(dbs)<-c("500bp","10kb")
@@ -494,7 +505,7 @@ motifEnrichment_selfMotifs_wGenes <- loadInt(scenicOptions, "motifEnrichment_sel
 tableSubset <- motifEnrichment_selfMotifs_wGenes[highlightedTFs=="Myc"]
 viewMotifs(tableSubset, options=list(pageLength=100)) 
 regulonTargetsInfo <- loadInt(scenicOptions, "regulonTargetsInfo")
-tableSubset <- regulonTargetsInfo 
+tableSubset <- regulonTargetsInfo # regulonTargetsInfo[highConfAnnot == T], regulonTargetsInfo[TF=="Myc"] 
 viewMotifs(tableSubset, options=list(pageLength=100))
 regulonAUC <- loadInt(scenicOptions, "aucell_regulonAUC")
 rss <- calcRSS(AUC=getAUC(regulonAUC), cellAnnotation=cellInfo[colnames(regulonAUC), "seuratCluster"], )
@@ -513,7 +524,7 @@ viewTable(topRegulators)
 
 MAHgenes <- hepato.markers[hepato.markers$cluster == 3, ]
 MAHgenes <- MAHgenes[MAHgenes$p_val_adj<0.01 &
-                                   MAHgenes$avg_log2FC>1, ]
+                       MAHgenes$avg_log2FC>1, ]
 MAHg <- rownames(MAHgenes)
 TF <- regulonTargetsInfo[TF %in% c("Myc", "Klf2", "Tfdp1", "Sap30", "E2f4") & highConfAnnot==T 
                          & gene %in% MAHg & CoexWeight >= 0.007] #
@@ -539,7 +550,11 @@ plot <- plot(gg,
              edge.arrow.size = 0.05,
              layout=layout.fruchterman.reingold, 
              vertex.label.family = "Arial"
-) ## Fig. S14
+)
+
+# Lgals3
+VlnPlot(hepato, features = "Lgals3", group.by = "condition", 
+        cols = c("#F88284", "#93458A", "#22AC7C")) # Fig4c
 
 # hepatocytes from the control liver vs hepatocytes from the transplatend liver
 cntl <- subset(hepa, mouse == "control")
@@ -548,6 +563,9 @@ tran <- subset(hepa, mouse == "transplanted")
 Idents(cntl) <- "control"
 Idents(tran) <- "transplanted"
 ct <- merge(cntl, tran)
+
+DefaultAssay(ct) <- "RNA" #
+ct <- NormalizeData(ct, normalization.method = "LogNormalize", scale.factor = 1e5) 
 
 de1 <- FindMarkers(ct, ident.1 = "transplanted", ident.2 = "control", min.pct = 0) # testはwilcox-test
 de1$gene <- rownames(de1)
@@ -559,7 +577,7 @@ de1_trans <- de1[de1$avg_log2FC > 0, ]
 de1_trans$mouse <- "transplanted"
 de1_cntl_vs_trans <- rbind(de1_cntl, de1_trans)
 
-install.packages("pacman")
+# install.packages("pacman")
 pacman::p_load(here,  
                tidyverse, 
                janitor, # Cleaning column names  
@@ -574,7 +592,7 @@ de1_cntl_vs_trans %>%
   distinct(gene_type) %>% 
   pull()
 
-certein_genes <- subset(de1_cntl_vs_trans2, gene == "Lcn2" | gene == "Saa1")
+certein_genes <- subset(de1_cntl_vs_trans, gene == "Lcn2" | gene == "Saa1")
 
 ggplot(data = de1_cntl_vs_trans, 
        aes(x = avg_log2FC, y = -log10(p_val_adj))) +
@@ -595,10 +613,10 @@ ggplot(data = de1_cntl_vs_trans,
   theme(panel.border = element_rect(colour = "black", fill = NA, size= 0.5),
         panel.grid.minor = element_blank(),
         panel.grid.major = element_blank())
-  # geom_label_repel(data = certein_genes,
-  #                  aes(label = gene),
-  #                  force = 2,
-  #                  nudge_y = 1) ## FigS13
+# geom_label_repel(data = certein_genes,
+#                  aes(label = gene),
+#                  force = 2,
+#                  nudge_y = 1) #FigS13
 
 ##### E0771 ####
 # E0771 from the metastasized liver vs E0771 in vitro
@@ -611,6 +629,9 @@ Idents(vivo) <- "vivo"
 Idents(vitro) <- "vitro"
 
 vv <- merge(vivo, vitro)
+
+DefaultAssay(vv) <- "RNA" 
+vv <- NormalizeData(vv, normalization.method = "LogNormalize", scale.factor = 1e5) 
 
 de3 <- FindMarkers(vv, ident.1 = "vivo", ident.2 = "vitro", min.pct = 0)
 de3$gene <- rownames(de3)
@@ -626,14 +647,14 @@ de3_vivo_vs_vitro <- subset(de3_vivo_vs_vitro, test == "TRUE")
 
 twogroup_entrez <- function(twogroup.deg, ms_ref, condition, p.thres, log2FC.thres){
   twogroup.marker.n <- twogroup.deg[twogroup.deg$condition == condition &
-                                      twogroup.deg$p_val_adj<p.thres &
+                                      twogroup.deg$p_val<p.thres &
                                       abs(twogroup.deg$avg_log2FC)>log2FC.thres,]
   perturbed_gene.n <- ms_ref[ms_ref$gene_short_name %in% twogroup.marker.n$gene,]
   perturbed_gene.n <- perturbed_gene.n[!is.na(perturbed_gene.n$entrez_annotation),]
   return(perturbed_gene.n)
 }
 
-de3_vivo.marker <- twogroup_entrez(de3_vivo_vs_vitro, ms_ref, "vivo", 0.1, 0.3)
+de3_vivo.marker <- twogroup_entrez(de3_vivo_vs_vitro, ms_ref, "vivo", 0.01, 0.3)
 ego_vivo <- enrichGO(gene = de3_vivo.marker$entrez_annotation,
                      OrgDb = org.Mm.eg.db,
                      ont = "ALL",
@@ -641,11 +662,14 @@ ego_vivo <- enrichGO(gene = de3_vivo.marker$entrez_annotation,
                      pvalueCutoff = 0.05,
                      qvalueCutoff = 0.05,
                      readable = T)
-barplot(ego_vivo, drop = T, showCategory = 30, font.size = 8) 
-write.xlsx(ego_vivo, "ego_vivo.xlsx", sheetName = "Sheet1") ## Fig. S15a
+barplot(ego_vivo, drop = T, showCategory = 30, font.size = 8) #FigS14
+write.xlsx(ego_vivo, "ego_vivo.xlsx", sheetName = "Sheet1")
 
 ######allcell#######
 VlnPlot(all, features = c("Il2", "Itgb1"), group.by = "condition", 
-        cols = c("#F88284", "#93458A", "#22AC7C", "#A3A500", "#4FACEF")) ## Figs. S15b and  S15c
+        cols = c("#F88284", "#93458A", "#22AC7C", "#A3A500", "#4FACEF"))
 
 
+
+
+# VlnPlot(vv, features= c("Il2", "Itgb2"))
