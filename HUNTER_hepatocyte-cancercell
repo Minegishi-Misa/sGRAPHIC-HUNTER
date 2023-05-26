@@ -1,6 +1,15 @@
-#########################
-##### Figure making #####
-#########################
+############################################################################
+### This script outputs figures corresconding to Fig. S10c in the manuscript of Minegishi et al. (2022).
+### Copyright (C) 2022  Misa Minegishi and Hirofumi Shintaku
+
+### This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version.
+
+### This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+### See the GNU General Public License for more details.
+
+### You should have received a copy of the GNU General Public License along with this program. 
+############################################################################
+
 
 ##### Library import #####
 require(readr)
@@ -29,8 +38,7 @@ library("org.Mm.eg.db")
 library(clusterProfiler)
 
 ##### Directory #####
-setwd("/home/samba/public/minegishi/Ranalysis/230525_2/")
-datadir <- "/home/samba/sanger/shintaku/hunter/20220411_scHUNTER/"
+datadir <- "./20220411_scHUNTER/"
 
 ##### Importing data #####
 hunter <- Read10X(data.dir=datadir)
@@ -51,22 +59,17 @@ VlnPlot(hunter.seurat,features = "nCount_RNA",group.by = "plate")+scale_y_log10(
 # allcell
 allcell <- hunter.seurat
 pbmc <- allcell
-# source("minegishi_Seurat_annotate_cells.R") #220701更新した
+
 # create reference table with gene_short_name
 source(file.path("/home/samba/public/shintaku/github/hunter2/util/hunter_biomart_ref.R"))
 gene_list <- data.frame(rownames(pbmc))
 colnames(gene_list) <- "gene"
-# #hs_ref <- func.biomart.ref(hs_mart,gene_list,"hgnc_symbol")
-filter="mgi_symbol" #"hgnc_symbol"はヒト、マウスは"mgi_symbol"
-# ms_mart <- useMart(biomart="ensembl", host="useast.ensembl.org",dataset="mmusculus_gene_ensembl")
+filter="mgi_symbol" 
 ms_mart <- useMart(biomart="ensembl", host="https://www.ensembl.org",dataset="mmusculus_gene_ensembl")
 symbol="mgi_symbol"
 ms_ref <- unique(func.biomart.ref(ms_mart,gene_list,filter,symbol))
 missing_ref <- subset(gene_list,!(gene %in% ms_ref$gene_short_name))
 adding_ref <- data.frame(cbind(missing_ref$gene,missing_ref$gene,missing_ref$gene,missing_ref$gene,missing_ref$gene, missing_ref$gene))
-# Error in names(x) <- value : 
-#'names' attribute [6] must be the same length as the vector [5]
-#'が出たときには、missing_ref$geneの数を増やす
 colnames(adding_ref) <- colnames(ms_ref)
 rownames(adding_ref) <- adding_ref$ensembl_gene_id
 ms_ref <- rbind(adding_ref,ms_ref)
@@ -458,7 +461,7 @@ pbmc[["cluster"]] <- Idents(pbmc)
 annotation_colinfo = data.frame(
   cluster = pbmc[["cluster"]]
 )
-ann_colors = list(cluster = c("2" = "#53B74B", "3" = "#6E9BF8"))　
+ann_colors = list(cluster = c("2" = "#53B74B", "3" = "#6E9BF8"))
 
 pheatmap(pbmc[["RNA"]]@data[top20$gene,order(pbmc[["pseudospace"]],decreasing=F)],
          annotation_col = pbmc[["cluster"]],
@@ -466,7 +469,7 @@ pheatmap(pbmc[["RNA"]]@data[top20$gene,order(pbmc[["pseudospace"]],decreasing=F)
          cluster_cols = F,
          labels_col = NULL) # Fig 4B
 
-# SCENIC #on sanger setwd("/home/samba/public/shitanku/github/hunter2/")
+# SCENIC
 library(SCENIC)
 library(loomR)
 library(SCopeLoomR)
@@ -479,7 +482,7 @@ loom <- build_loom("hunter_hepa.loom", dgem=exprMat)
 loom <- add_cell_annotation(loom, cellInfo)
 close_loom(loom)
 org <- "mgi"
-dbDir <- "/home/samba/public/genome/cisTarget_mm10/" # RcisTarget databases location
+dbDir <- "./cisTarget_mm10/" # RcisTarget databases location
 myDatasetTitle <- "SCENIC hunter hepatocytes" # choose a name for your analysis
 dbs <- c("mm10__refseq-r80__500bp_up_and_100bp_down_tss.mc9nr.feather",
          "mm10__refseq-r80__10kb_up_and_down_tss.mc9nr.feather")
@@ -667,9 +670,5 @@ write.xlsx(ego_vivo, "ego_vivo.xlsx", sheetName = "Sheet1")
 
 ######allcell#######
 VlnPlot(all, features = c("Il2", "Itgb1"), group.by = "condition", 
-        cols = c("#F88284", "#93458A", "#22AC7C", "#A3A500", "#4FACEF"))
+        cols = c("#F88284", "#93458A", "#22AC7C", "#A3A500", "#4FACEF")) #FigS15b
 
-
-
-
-# VlnPlot(vv, features= c("Il2", "Itgb2"))
