@@ -639,7 +639,7 @@ vv <- NormalizeData(vv, normalization.method = "LogNormalize", scale.factor = 1e
 de3 <- FindMarkers(vv, ident.1 = "vivo", ident.2 = "vitro", min.pct = 0)
 de3$gene <- rownames(de3)
 de3$test <- "FALSE"
-de3[abs(de3$avg_log2FC) > 0.27 & de3$p_val_adj<0.1, ]$test <- "TRUE"
+de3[abs(de3$avg_log2FC) > 0.3 & de3$p_val_adj<0.1, ]$test <- "TRUE"
 
 de3_vivo <- de3[de3$avg_log2FC > 0, ]
 de3_vivo$condition <- "vivo"
